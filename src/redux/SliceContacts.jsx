@@ -1,57 +1,41 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { nanoid } from 'nanoid';
-
-const initialContacts = [
-          { 
-            id: 'id-1',
-            name: 'John Miller',
-            number: '123-45-67'
-          },
-          {
-            id: 'id-2',
-            name: 'Michael Brown',
-            number: '987-65-43'
-          },
-          {
-            id: 'id-3',
-            name: 'William Smith',
-            number: '456-78-90'
-          },
-          {
-            id: 'id-4',
-            name: 'Robert Taylor',
-            number: '234-56-78'
-          },
-          {
-            id: 'id-5',
-            name: 'James Johnson',
-            number: '789-01-23'
-          }
-];
-
-const contactsSliced = createSlice({
+import { onFetchContact, onHandleContactAdd, onHandleDeleteContact } from 'redux/Operations';
+const onLoadMarker = state => {
+  state.isLoading = true;
+};
+const onRejectionMarker = (state, action) => {
+  state.isLoading = false;
+  state.error = action.payload;
+};
+const slicedContacts = createSlice({
   name: 'contacts',
-  initialState: initialContacts,
-  reducers: {
-    onAddContact: {
-      reducer(state, action) {
-        return [...state, action.payload];
-      },
-      prepare(name, number) {
-        return {
-          payload: {
-            id: nanoid(),
-            name,
-            number,
-          },
-        };
-      },
+  initialState: {
+    items: [],
+    isLoading: false,
+    error: null,
+  },
+  extraReducers: {
+    [onFetchContact.pending]: onLoadMarker,
+    [onFetchContact.fulfilled](state, action) {
+      state.isLoading = false;
+      state.error = null;
+      state.items = action.payload;
     },
-    onDeleteContact(state, action) {
-      return state.filter(contact => contact.id !== action.payload);
+    [onFetchContact.rejected]: onRejectionMarker,
+    [onHandleContactAdd.pending]: onLoadMarker,
+    [onHandleContactAdd.fulfilled](state, action) {
+      state.isLoading = false;
+      state.error = null;
+      state.items.push(action.payload);
     },
+    [onHandleContactAdd.rejected]: onRejectionMarker,
+    [onHandleDeleteContact.pending]:onLoadMarker,
+    [onHandleDeleteContact.fulfilled](state, action) {
+      state.isLoading = false;
+      state.error = null;
+      state.items = state.items.filter(item => item.id !== action.payload.id);
+    },
+    [onHandleDeleteContact.rejected]: onRejectionMarker,
   },
 });
-
-export const { onAddContact,  onDeleteContact } = contactsSliced.actions;
-export const contactsReducer = contactsSliced.reducer;
+export const reducerContacts = slicedContacts.reducer;
