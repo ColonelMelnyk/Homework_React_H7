@@ -1,44 +1,45 @@
-import React from 'react';
 import { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { onAddContact } from 'redux/SliceContacts';
-import { Notify } from 'notiflix';
+import { useSelector, useDispatch } from 'react-redux';
+import { onHandleContactAdd } from 'redux/Operations';
+import { selectContacts } from 'redux/Selector';
 import css from './Form.module.css'
+import { Notify } from 'notiflix';
 export const Form = () => {
-    const [name, setName] = useState('');
-    const [number, setNumber] = useState('');
-    const dispatch = useDispatch();
-    const contacts = useSelector(state => state.contacts);
-    const isRealContact = contacts.some(
+  const dispatch = useDispatch();
+  const contacts = useSelector(selectContacts);
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const isRealContact = contacts.some(
     contact => contact.name.toLowerCase() === name.toLowerCase()
-    );
-    const onHandleSubmit = event => {
-      event.preventDefault();
-      if (isRealContact) {
-        return Notify.failure(`${name} Contact already exists!`);
-      }
-      dispatch(onAddContact(name, number));
-      setName('');
-      setNumber('');
-    };
-    const onHandleChange = event => {
-      const { name, value } = event.target;
-  
-      switch (name) {
-        case 'name':
-          setName(value);
-          break;
-        case 'number':
-          setNumber(value);
-          break;
-        default:
-          return;
-      }
-    };
-  
+  );
+  const onHandleSubmit = event => {
+    event.preventDefault();
+    if (isRealContact) {
+      return Notify.failure(`${name} already exists!`);
+    }
+    dispatch(onHandleContactAdd({ name, phone }));
+    setName('');
+    setPhone('');
+    return Notify.success(`${name} is added!`);
+  };
 
-    return (
-      <form className={css.form} onSubmit={onHandleSubmit}>
+  const onHandleChange = event => {
+    const { name, value } = event.target;
+
+    switch (name) {
+      case 'name':
+        setName(value);
+        break;
+      case 'phone':
+        setPhone(value);
+        break;
+      default:
+        return;
+    }
+  };
+
+  return (
+    <form className={css.form} onSubmit={onHandleSubmit}>
         <label >
           <h2>Name</h2>
           <input
@@ -54,10 +55,10 @@ export const Form = () => {
         <label>
           <h2>Number</h2>
           <input
-           value={number}
+           value={phone}
            onChange={onHandleChange}
             type="tel"
-            name="number"
+            name="phone"
             pattern="\+?\d{1,4}[-.\s]?\(?\d{1,3}\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}"
             title="Phone number must be digits and can contain spaces, dashes, parentheses and can start with +"
             required
@@ -65,5 +66,5 @@ export const Form = () => {
         </label>
         <button className={css.button} type="submit">Add contact</button>
       </form>
-    );
-  }
+  );
+};
